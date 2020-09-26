@@ -1,0 +1,310 @@
+/*
+
+AIM 	   :Hadoop Addtional UseCase_Q&A(Using scripting)
+DATE	   :14-DEC-2017
+PreRequest :hadoop-2.7.1/ RHEL Operation system.
+
+*/
+1.Create a new directory in linux namely ~/install/hdfsusecases and 
+create a new file inside the above directory namely ~/install/hdfsusecases/NYSE_2020_06_20.txt 
+copying the first 1000 lines from an existing file ~/pigdata/NYSE_daily
+	$ cd ~/install/hdfsusecases
+	$ head -1000 ~/pigdata/NYSE_daily > ~/install/hdfsusecases/NYSE_2020_06_20.txt
+-----------------------
+#!/bin/bash	
+#set -x	 #If set -x enables a mode of the shell where all executed commands are printed to the terminal
+if [ -d  ~/install/hdfsusecases ]
+then
+        echo "hdfsusecases DIR is present... "
+else
+        mkdir ~/install/hdfsusecases
+        echo "hdfsusecases DIR created successfully..."
+fi
+
+echo " Copying the first 1000 lines from an existing file ~/pigdata/NYSE_daily"
+head -1000 ~/pigdata/NYSE_daily > ~/install/hdfsusecases/NYSE_2020_06_20_sh.txt
+
+if [ $? -eq 0 ]
+then
+        echo "Copy has been completed"
+else
+        echo "Copy has not completed"
+        exit 0
+fi
+
+o/p
+$./Q1.sh
+hdfsusecases DIR is present..
+Copying the first 1000 lines from an existing file ~/pigdata/NYSE_daily
+Copy has been completed..
+--------------------------------------------------------------------------------------------------------
+
+2. Create another new file inside the above directory namely ~/install/hdfsusecases/NYSE_2020_06_21.txt 
+   copying the line from 1001 to 2000 from an existing file ~/pigdata/NYSE_daily
+   $ head -2000 ~/pigdata/NYSE_daily | tail -1000 > ~/install/hdfsusecases/NYSE_2020_06_21.txt
+---------------------------
+#!/bin/bash	
+#set -x	 #If set -x enables a mode of the shell where all executed commands are printed to the terminal
+if [ -d  ~/install/hdfsusecases ]
+then
+        echo "hdfsusecases DIR is present... "
+else
+        mkdir ~/install/hdfsusecases
+        echo "hdfsusecases DIR created successfully..."
+fi
+
+echo " Copying line from 1001 to 2000 an existing file ~/pigdata/NYSE_daily"
+cat ~/pigdata/NYSE_daily | sed -n '1001,2000p' > ~/install/hdfsusecases/NYSE_2020_06_21_sh.txt
+
+if [ $? -eq 0 ]
+then
+        echo "From 1001 to 2000 Copy has been completed"
+else
+        echo "Copy has not completed"
+        exit 0
+fi
+
+o/p
+$./Q2.sh
+hdfsusecases DIR is present...
+Copying line from 1001 to 2000 an existing file ~/pigdata/NYSE_daily
+From 1001 to 2000 Copy has been completed
+
+--------------------------------------------------------------------------------------------------------
+
+3.Create a directory in Hadoop namely /tmp/hdfsusecases
+	$ hadoop fs -mkdir /tmp/hdfsusecases
+	
+4. Check whether the above directory is created in HDFS or not using the below command (Note: We use –test –d option to check whether the given path is a directory or not)
+    
+	$ hadoop fs -test -d /tmp/hdfsusecases
+
+5.Check what is the status code of the above command using, if it shows 0 then directory is created, if shows non zero then the directory is not created then check the step 3 again.
+
+    $ echo $?
+	0
+---------------------------------------------------
+#!/bin/bash	
+#set -x	 #If set -x enables a mode of the shell where all executed commands are printed to the terminal(Console)
+echo "Trying to create Directory in HDFS...."
+hadoop fs -mkdir /tmp/hdfsusecases_sh
+hadoop fs -test -d /tmp/hdfsusecases_sh
+if [ $? -eq 0 ]
+then
+        echo "Hadoop Directory has created Succssefully..."
+else
+        echo "Hadoop Directory has NOT created Succssefully..."
+        exit 0
+fi
+
+o/p
+$ ./Q3-Q5.sh
+Trying to create Directory in HDFS....
+20/07/11 09:16:12 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+20/07/11 09:16:21 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+Hadoop Directory has created Succssefully...
+
+---------------------------------------------------------------------------------------------------------
+
+6.Copy file generated only in step 1 (~/install/hdfsusecases/NYSE_2020_06_20.txt) from linux to hdfs directory /tmp/hdfsusecases in the name of NYSE_2020_06.txt
+    $ hadoop fs -put ~/install/hdfsusecases/NYSE_2020_06_20.txt /tmp/hdfsusecases/NYSE_2020_06.txt
+	
+7.Like step 4 and 5, check whether the above file (/tmp/hdfsusecases/NYSE_2020_06.txt) is created or not in HDFS, using f option and check for the 
+  status code using $? and create a zero byte file in HDFS directory /tmp/hdfsusecases in the name of _SUCCESS
+  
+    $ hadoop fs -test -f /tmp/hdfsusecases/NYSE_2020_06.txt
+    $ echo $?
+    $ hadoop fs -touchz /tmp/hdfsusecases/_SUCCESS
+----------------------------------------------------
+#!/bin/bash	
+#set -x	 #If set -x enables a mode of the shell where all executed commands are printed to the terminal
+echo "Copying from linux to hdfs directory...."
+hadoop fs -put ~/install/hdfsusecases/NYSE_2020_06_20_sh.txt /tmp/hdfsusecases/NYSE_2020_06_sh.txt
+hadoop fs -test -f /tmp/hdfsusecases/NYSE_2020_06_sh.txt
+
+if [ $? -eq 0 ]
+then
+        hadoop fs -touchz /tmp/hdfsusecases/_SUCCESS_SH
+		echo "Copying from linux to hdfs directory has Success..."
+else
+        echo "Copying from linux to hdfs directory has FAILED..."
+        exit 0
+fi
+
+o/p
+$ ./Q6Q7.sh
+Copying from linux to hdfs directory....
+20/07/11 09:29:05 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+20/07/11 09:29:10 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+20/07/11 09:29:12 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+Copying from linux to hdfs directory has done and _SUCCESS file got created...
+-------------------------------------------------------------------------------------------------------
+
+13. Delete the line number 1 from the HDFS file /tmp/hdfsusecases/NYSE_2020_06.txt , for example if the above file contains 100 rows, after deletion it should have 
+	only 99 rows in HDFS Note: we can’t do this directly because of the WORM property of HDFS data, think about the possible work around and try to achive the result
+
+14. Copy the above file /tmp/hdfsusecases/NYSE_2020_06.txt in the name of /tmp/hdfsusecases/NYSE_2020_06_bkp.txt
+
+$hadoop fs -copyToLocal /tmp/hdfsusecases/NYSE_2020_06.txt  ~/install/hdfsusecases/NYSE_2020_06_bkp.txt
+
+$ sed '1d' ~/install/hdfsusecases/NYSE_2020_06_bkp.txt > ~/install/hdfsusecases/NYSE_2020_06_dfl.txt
+$ hadoop fs -copyFromLocal -f ~/install/hdfsusecases/NYSE_2020_06_dfl.txt  /tmp/hdfsusecases/NYSE_2020_06.txt
+
+
+
+$ hadoop fs -cat /tmp/hdfsusecases/NYSE_2020_06.txt |wc -l
+
+	$ hadoop fs -cat /tmp/hdfsusecases/NYSE_2020_06.txt | sed '1d' > ~/install/hdfsusecases/NYSE_2020_06_dfline.txt 
+	$ hadoop fs -copyFromLocal -f ~/install/hdfsusecases/NYSE_2020_06_dfline.txt /tmp/hdfsusecases/NYSE_2020_06.txt
+	$ hadoop fs -cat /tmp/hdfsusecases/NYSE_2020_06.txt |wc -l
+
+------------------------
+
+#!/bin/bash	
+#set -x	 #If set -x enables a mode of the shell where all executed commands are printed to the terminal
+echo "Delete the line number 1 from the HDFS file...."
+hadoop fs -copyToLocal /tmp/hdfsusecases/NYSE_2020_06_sh.txt  ~/install/hdfsusecases/NYSE_2020_06_sh_bkp.txt
+echo "Copied the file /tmp/hdfsusecases/NYSE_2020_06_sh.txt to local...."
+sed '1d' ~/install/hdfsusecases/NYSE_2020_06_sh_bkp.txt > ~/install/hdfsusecases/NYSE_2020_06_sh_dfl.txt
+echo "Removed 1st Line from File...."
+hadoop fs -copyFromLocal -f ~/install/hdfsusecases/NYSE_2020_06_sh_dfl.txt  /tmp/hdfsusecases/NYSE_2020_06_sh.txt
+if [ $? -eq 0 ]
+then     
+		rm ~/install/hdfsusecases/NYSE_2020_06_sh_dfl.txt
+		echo "New File deleted from LOCAL and moved to HDFS Success..."
+		echo "New file moved to HDFS with Line # " 
+		hadoop fs -cat /tmp/hdfsusecases/NYSE_2020_06_sh.txt |wc -l
+else
+        echo "New file moved to HDFS has FAILED..."
+        exit 0
+		
+fi
+-----------------------------------------------------------------------------------------------------------
+sfm1.bash
+---------------------
+set -x
+echo "run the script like -  bash sfm.sh https://s3.amazonaws.com/in.inceptez.bucket1/retailsrc/trans -O /tmp/clouddata/trans"
+dt=`date '+%Y%m%d%H'`
+
+if [ -d /tmp/clouddata ]
+then
+echo "src dir is present"
+else
+mkdir /tmp/clouddata
+fi
+
+if [ -d /tmp/clouddata/archive ]
+then
+echo "archival path exists"
+else
+mkdir /tmp/clouddata/archive
+fi
+
+
+echo "importing data from cloud" >> /tmp/sfm_${dt}.log
+wget $1 -O /tmp/clouddata/trans
+#wget https://s3.amazonaws.com/in.inceptez.bucket1/retailsrc/trans -O /tmp/clouddata/trans
+
+if [ $? -eq 0 ]
+then
+echo "import of data from cloud is completed" >> /tmp/sfm_${dt}.log
+else
+echo "no data imported from cloud"
+exit 0
+fi
+
+if [ -f /tmp/clouddata/trans ]
+then
+echo "file is present, proceeding further" >> /tmp/sfm_${dt}.log
+mv /tmp/clouddata/trans /tmp/clouddata/trans_${dt}
+trlcnt=`tail -1 /tmp/clouddata/trans_${dt} | awk -F'|' '{ print $2 }'`
+filecnt=`cat /tmp/clouddata/trans_${dt} | wc -l`
+echo "trailer count is $trlcnt"
+echo "file count is $filecnt"
+	if [ $trlcnt -ne $filecnt ]
+	then
+	echo "moving to reject, file is invalid" >> /tmp/sfm_${dt}.log
+	mkdir -p /tmp/clouddata/reject
+	mv /tmp/clouddata/trans_${dt} /tmp/clouddata/reject/
+	exit 0
+	fi
+echo "Remove the trailer line in the file"
+sed -i '$d' /tmp/clouddata/trans_${dt}
+hadoop fs -mkdir -p /user/hduser/clouddata/
+hadoop fs -D dfs.block.size=67108864 -copyFromLocal -f /tmp/clouddata/trans_${dt} /user/hduser/clouddata/
+	 if [ $? -eq 0 ]
+	 then
+	 hadoop fs -touchz /user/hduser/clouddata/_SUCCESS
+	 echo "Data copied to HDFS successfully"
+	 echo "Data copied to HDFS successfully" >>  /tmp/sfm_${dt}.log
+	 else
+	 echo "Failed to copy data to HDFS `date` " >> /tmp/sfm_${dt}.log
+	 fi
+echo "moving to linux archive after compressing" >> /tmp/sfm_${dt}.log
+gzip /tmp/clouddata/trans_${dt}
+mv /tmp/clouddata/trans_${dt}.gz /tmp/clouddata/archive/
+else
+echo "No data to process"
+echo "No data to process" >>  /tmp/sfm_${dt}.log
+exit 0
+fi
+
+---------------------
+o/p
+
+$ bash sfm1.bash https://s3.amazonaws.com/in.inceptez.bucket1/retailsrc/trans
+
++ echo 'run the script like -  bash sfm.sh https://s3.amazonaws.com/in.inceptez.bucket1/retailsrc/trans -O /tmp/clouddata/trans'
+run the script like -  bash sfm.sh https://s3.amazonaws.com/in.inceptez.bucket1/retailsrc/trans -O /tmp/clouddata/trans
+++ date +%Y%m%d%H
++ dt=2020071113
++ '[' -d /tmp/clouddata ']'
++ mkdir /tmp/clouddata
++ '[' -d /tmp/clouddata/archive ']'
++ mkdir /tmp/clouddata/archive
++ echo 'importing data from cloud'
++ wget https://s3.amazonaws.com/in.inceptez.bucket1/retailsrc/trans -O /tmp/clouddata/trans
+--2020-07-11 13:42:21--  https://s3.amazonaws.com/in.inceptez.bucket1/retailsrc/trans
+Resolving s3.amazonaws.com... 52.217.45.230
+Connecting to s3.amazonaws.com|52.217.45.230|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 8261365 (7.9M) [binary/octet-stream]
+Saving to: “/tmp/clouddata/trans”
+
+100%[========================================================================================================>] 8,261,365   2.61M/s   in 3.0s
+
+2020-07-11 13:42:26 (2.61 MB/s) - “/tmp/clouddata/trans” saved [8261365/8261365]
+
++ '[' 0 -eq 0 ']'
++ echo 'import of data from cloud is completed'
++ '[' -f /tmp/clouddata/trans ']'
++ echo 'file is present, proceeding further'
++ mv /tmp/clouddata/trans /tmp/clouddata/trans_2020071113
+++ tail -1 /tmp/clouddata/trans_2020071113
+++ awk '-F|' '{ print $2 }'
++ trlcnt=93513
+++ cat /tmp/clouddata/trans_2020071113
+++ wc -l
++ filecnt=93513
++ echo 'trailer count is 93513'
+trailer count is 93513
++ echo 'file count is 93513'
+file count is 93513
++ '[' 93513 -ne 93513 ']'
++ echo 'Remove the trailer line in the file'
+Remove the trailer line in the file
++ sed -i '$d' /tmp/clouddata/trans_2020071113
++ hadoop fs -mkdir -p /user/hduser/clouddata/
+20/07/11 13:42:30 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
++ hadoop fs -D dfs.block.size=67108864 -copyFromLocal -f /tmp/clouddata/trans_2020071113 /user/hduser/clouddata/
+20/07/11 13:42:35 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
++ '[' 0 -eq 0 ']'
++ hadoop fs -touchz /user/hduser/clouddata/_SUCCESS
+20/07/11 13:42:41 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
++ echo 'Data copied to HDFS successfully'
+Data copied to HDFS successfully
++ echo 'Data copied to HDFS successfully'
++ echo 'moving to linux archive after compressing'
++ gzip /tmp/clouddata/trans_2020071113
++ mv /tmp/clouddata/trans_2020071113.gz /tmp/clouddata/archive/
+----------------------------------------------------------------------------------------------------------------

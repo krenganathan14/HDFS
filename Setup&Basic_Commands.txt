@@ -1,0 +1,266 @@
+/*
+
+AIM 	   :Setup Hadoop 2.7.1 cluster on RHEL and hadoop & basic Commands
+DATE	   :14-DEC-2017
+PreRequest :hadoop-2.7.1/ RHEL Operation system.
+
+*/
+
+1. Under the complete hadoop-2.7.1 package and move to the common directory and give the
+   respective permissions.(in ~/install/ dir we should have hadoop-2.7.1.tar.gz)
+
+cd /home/hduser/install/
+tar xvzf hadoop-2.7.1.tar.gz           // extract(the 'x' letter) be verbose(the 'v' letter) gunzip(the 'z' letter) from file (the 'f' letter, and the file name follows).
+sudo mv hadoop-2.7.1 /usr/local/hadoop
+sudo chown -R hduser:hadoop
+
+2. Edit the hadoop environment script to use java home variable used by Hadoop and modify the file
+   with the following (.hashrc have set all the path)
+
+echo 'export JAVA_HOME=/usr/lib/jvm/jdk1.8.0_71' >> /usr/local/hadoop/etc/hadoop/hadoop-env.sh
+
+3. Create the following Directories for hadoop temporary files, namenode metadata, datanode data
+   and secondary namenode metadata.
+
+sudo mkdir -p /usr/local/hadoop_store/tmp
+sudo mkdir -p /usr/local/hadoop_store/hdfs/namenode
+sudo mkdir -p /usr/local/hadoop_store/hdfs/datanode
+sudo mkdir -p /usr/local/hadoop_store/hdfs/secondarynamenode
+sudo chown -R hduser:hadoop /usr/local/hadoop_store
+
+4. By default, the /usr/local/hadoop/etc/hadoop/ folder contains the
+   /usr/local/hadoop/etc/hadoop/mapred-site.xml.template file which has to be renamed/copied with
+   the name mapred-site.xml
+   
+cp /usr/local/hadoop/etc/hadoop/mapred-site.xml.template /usr/local/hadoop/etc/hadoop/mapred-site.xml
+
+5. Now you start with the configuration with basic hadoop single node cluster setup. First edit hadoop
+   configuration files and make following changes.
+
+	i) The mapred-site.xml file contains the configuration settings for MapReduce daemon on YARN
+
+		sudo vi /usr/local/hadoop/etc/hadoop/mapred-site.xml
+		
+			<configuration>
+				<property>
+					<name>mapreduce.framework.name</name>
+					<value>yarn</value>
+				</property>
+			</configuration>
+
+	ii) The core-site.xml file informs Hadoop daemon where NameNode runs in the cluster. It contains
+		the configuration settings for Hadoop Core such as I/O settings that are common to HDFS&
+		MapReduce.
+				
+		sudo vi /usr/local/hadoop/etc/hadoop/core-site.xml
+		
+				<configuration>
+					<property>
+					<name>hadoop.tmp.dir</name>
+					<value>/usr/local/hadoop_store/tmp</value>
+					<description>A base for other temporary directories.</description>
+					</property>					
+					<property>
+					<name>fs.default.name</name>
+					<value>hdfs://localhost:54310</value>
+					<description>
+					The name of the default file system. A URI whose scheme and authority determine the FileSystem implementation. The uri's scheme determines the config property fs.SCHEME.impl) naming the FileSystem implementation class. The uri's authority is used to determine the host, port, etc. for a filesystem.
+					</description>
+					</property>					
+				</configuration>
+				
+	iii) The hdfs-site.xml file contains the configuration settings for HDFS daemons; the NameNode, the
+		 Secondary NameNode, and the DataNodes. Here, we can configure hdfs-site.xml to specify default block replication. The actual number of replications can also be specified when the file is created. The default is used if replication is not specified in create time.
+
+		sudo vi /usr/local/hadoop/etc/hadoop/hdfs-site.xml
+					<configuration>
+						<property>
+						<name>dfs.replication</name>
+						<value>1</value>
+						<description>Default block replication.
+						The actual number of replications can be specified when the file is created.
+						The default is used if replication is not specified in create time.
+						</description>
+						</property>
+						<property>
+						<name>dfs.namenode.name.dir</name>
+						<value>file:/usr/local/hadoop_store/hdfs/namenode</value>
+						</property>
+						<property>
+						<name>dfs.datanode.data.dir</name>
+						<value>file:/usr/local/hadoop_store/hdfs/datanode</value>
+						</property>
+						<property>
+						<name>dfs.namenode.checkpoint.dir</name>
+						<value>file:/usr/local/hadoop_store/hdfs/secondarynamenode</value>
+						</property>
+						<property>
+						<name>dfs.namenode.checkpoint.period</name>
+						<value>3600</value>
+					    </property>
+					</configuration>
+					
+	iv) The yarn-site.xml file contains configuration information that overrides the default values for YARN parameters.
+
+		sudo vi /usr/local/hadoop/etc/hadoop/yarn-site.xml
+		
+					<configuration>
+						<!-- Site specific YARN configuration properties -->
+						<property>
+						<name>yarn.nodemanager.aux-services</name>
+						<value>mapreduce_shuffle</value>
+						</property>
+						<property>
+						<name>yarn.nodemanager.aux-services.mapreduce.shuffle.class</name>
+						<value>org.apache.hadoop.mapred.ShuffleHandler</value>
+						</property>
+					</configuration>
+					
+6. Now we test single node cluster installation:
+   When we format namenode it formats the meta-data related to data-nodes. By doing that, all the
+   information on the datanodes are lost and they can be reused for new data. Normally namenode format will be done only at the first time of hadoop cluster setup.
+   
+hadoop namenode -format
+
+7. Start the daemon services by running the below script
+   To start the Daemons in single command (useful in single node cluster)
+   
+start-all.sh
+
+	(OR)
+	To start the Daemons separately HDFS and YARN (Useful when hdfs and yarn daemons installed separately)
+	
+	start-yarn.sh (Resource Manager and Node manager)
+	start-dfs.sh (namenode, datanode and secondarynamenode)
+	
+	(OR)
+	To start the Daemons individually ( Useful in multinode cluster setup
+	
+	hadoop-daemons.sh start namenode
+	hadoop-daemons.sh start secondarynamenode
+	hadoop-daemons.sh start datanode
+	yarn-daemon.sh start nodemanager
+	yarn-daemon.sh start resourcemanager
+	mr-jobhistory-daemon.sh start historyserver
+
+8. Run JPS to ensure all daemons are started under the JVMs.
+
+jps
+
+9. Create the following user directory in hdfs and change the ownlership of the directory to hadoop.
+
+hadoop fs -mkdir -p /user/hduser
+hadoop fs -chown -R hduser:hadoop /user/hduser
+
+10. Login to the below Namenode web UI to view the namenode and datanode info.
+
+	http://localhost:50070/
+	
+11. Login to the below Resource manager web UI to view the RM info.
+
+	http://localhost:8088/
+	
+============================================================================================================================
+Hadoop Commends
+----------------
+
+Open a terminal window to the current working directory.
+cd /home/hduser
+
+1. Print the Hadoop version
+hadoop version
+
+2. Report the amount of space used and # available on currently mounted filesystem
+hadoop fs -df hdfs:/
+
+3. Count the number of directories, files and bytes under # the paths that match the specified file pattern #
+hadoop fs -count hdfs:/
+
+4. Count the number of directories, files and bytes under # the paths that match the specified file pattern #
+hadoop fs -mkdir /user/hduser/hadoop
+hadoop fs -mkdir -p /user/hduser/hadoop/dir1/dir2
+
+5. Create a sample file in linux and place it into hadoop directory
+echo "sampledata" > sample.txt
+hadoop fs -put ~/sample.txt /user/hduser/hadoop
+hadoop fs -copyFromLocal -f ~/sample.txt /user/hduser/hadoop
+
+6. List the contents of this new directory in HDFS.
+hadoop fs -ls /user/hduser/hadoop
+
+7. Copy a directory from local to hadoop.
+hadoop fs -put /home/hduser/mrdata /user/hduser/hadoop
+
+8. Remove a HDFS file
+hadoop fs -copyFromLocal test1.txt hadoop/
+hadoop fs -rm hadoop/test1.txt
+
+10. Remove the entire directory and all of its contents in hadoop.
+hadoop fs -mkdir hadoop/test
+hadoop fs -put ~/sample.txt hadoop/test
+hadoop fs -rm -r hadoop/test
+
+11. Copy the file from hadoop to local.
+hadoop fs -copyToLocal /user/hduser/test.txt /tmp
+
+12. Remove all files from hadoop directory ending with .txt
+hadoop fs -rm hadoop/*.txt
+
+13. cp is used to copy files between directories present in HDFS
+hadoop fs -cp /user/hduser/test.txt /user/hduser/test2.txt
+
+14. Get command to copy the file from hadoop to local.
+hadoop fs -get test2.txt /home/hduser/test3.txt
+
+15. Display last few lines in hadoop
+hadoop fs -put filename
+hadoop fs -tail filename
+
+16. HDFS file permission setup, default is 666
+hadoop fs -touchz hadoop/test4.txt
+hadoop fs -ls hadoop/test4.txt
+hadoop fs -chmod 600 hadoop/test4.txt
+
+17. View the content of copied file.
+hadoop fs -cat /user/hduser/testing/test.txt
+
+18. Move file from local to hdfs
+hadoop fs -moveFromLocal ~/test.txt /user/hduser/test.txt
+
+19. Append file from local to hdfs.
+cd ~
+echo somedata > test1.txt
+hadoop fs -appendToFile test1.txt /user/hduser/testing/test.txt
+
+20. Create new file with zero content.
+hadoop fs -touchz text.txt
+
+ADMIN COMMANDS
+
+1. See how much space this directory occupies in HDFS.
+hadoop fs -du -s -h hadoop
+
+2. Run a DFS filesystem checking utility
+hadoop fsck - /
+
+3. Run a cluster balancing utility
+hadoop balancer
+
+4. Default names of owner and group are hduser,
+hadoop fs -ls test2.txt
+hadoop fs -chown inceptez:inceptez test2.txt
+
+5. Change the group of a file in hadoop
+hadoop fs -ls test2.txt
+hadoop fs -chgrp hadoop test2.txt
+6. Changing the replication factor of a file
+hadoop fs -setrep -w 2 test2.txt
+
+7. Checking the replication statistics of a file
+hadoop fs -stat %r test2.txt
+
+8. Check whether namenode in safemode and leave safe mode
+hdfs dfsadmin -safemode get
+hdfs dfsadmin -safemode leave
+===============================================================================================================================
+
