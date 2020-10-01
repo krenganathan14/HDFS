@@ -183,7 +183,7 @@ fi
 sfm1.bash
 ---------------------
 set -x
-echo "run the script like -  bash sfm.sh https://s3.amazonaws.com/in.inceptez.bucket1/retailsrc/trans -O /tmp/clouddata/trans"
+echo "run the script like -  bash sfm.sh https://s3.amazonaws.com/in.internal.bucket1/retailsrc/trans -O /tmp/clouddata/trans"
 dt=`date '+%Y%m%d%H'`
 
 if [ -d /tmp/clouddata ]
@@ -203,7 +203,7 @@ fi
 
 echo "importing data from cloud" >> /tmp/sfm_${dt}.log
 wget $1 -O /tmp/clouddata/trans
-#wget https://s3.amazonaws.com/in.inceptez.bucket1/retailsrc/trans -O /tmp/clouddata/trans
+#wget https://s3.amazonaws.com/in.internal.bucket1/retailsrc/trans -O /tmp/clouddata/trans
 
 if [ $? -eq 0 ]
 then
@@ -252,10 +252,10 @@ fi
 ---------------------
 o/p
 
-$ bash sfm1.bash https://s3.amazonaws.com/in.inceptez.bucket1/retailsrc/trans
+$ bash sfm1.bash https://s3.amazonaws.com/in.internal.bucket1/retailsrc/trans
 
-+ echo 'run the script like -  bash sfm.sh https://s3.amazonaws.com/in.inceptez.bucket1/retailsrc/trans -O /tmp/clouddata/trans'
-run the script like -  bash sfm.sh https://s3.amazonaws.com/in.inceptez.bucket1/retailsrc/trans -O /tmp/clouddata/trans
++ echo 'run the script like -  bash sfm.sh https://s3.amazonaws.com/in.internal.bucket1/retailsrc/trans -O /tmp/clouddata/trans'
+run the script like -  bash sfm.sh https://s3.amazonaws.com/in.internal.bucket1/retailsrc/trans -O /tmp/clouddata/trans
 ++ date +%Y%m%d%H
 + dt=2020071113
 + '[' -d /tmp/clouddata ']'
@@ -263,8 +263,8 @@ run the script like -  bash sfm.sh https://s3.amazonaws.com/in.inceptez.bucket1/
 + '[' -d /tmp/clouddata/archive ']'
 + mkdir /tmp/clouddata/archive
 + echo 'importing data from cloud'
-+ wget https://s3.amazonaws.com/in.inceptez.bucket1/retailsrc/trans -O /tmp/clouddata/trans
---2020-07-11 13:42:21--  https://s3.amazonaws.com/in.inceptez.bucket1/retailsrc/trans
++ wget https://s3.amazonaws.com/in.internal.bucket1/retailsrc/trans -O /tmp/clouddata/trans
+--2020-07-11 13:42:21--  https://s3.amazonaws.com/in.internal.bucket1/retailsrc/trans
 Resolving s3.amazonaws.com... 52.217.45.230
 Connecting to s3.amazonaws.com|52.217.45.230|:443... connected.
 HTTP request sent, awaiting response... 200 OK
