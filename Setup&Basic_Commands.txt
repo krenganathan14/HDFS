@@ -248,7 +248,7 @@ hadoop balancer
 
 4. Default names of owner and group are hduser,
 hadoop fs -ls test2.txt
-hadoop fs -chown inceptez:inceptez test2.txt
+hadoop fs -chown hduser:hduser test2.txt
 
 5. Change the group of a file in hadoop
 hadoop fs -ls test2.txt
